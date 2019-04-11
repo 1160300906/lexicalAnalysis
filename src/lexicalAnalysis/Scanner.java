@@ -29,7 +29,7 @@ public class Scanner {
 	{  
 	     return ch == '+' || ch == '-' || ch == '*' || ch == '/' || ch == '='  
 	            || ch == '>' || ch == '<' || ch == '&' || ch == '|'  
-	            || ch == '^';  
+	            || ch == '^' || ch == '!';  
 	 }
 	//可以连续两个运算符一样
 	public static Boolean isPlusSame(char ch) {
@@ -38,22 +38,6 @@ public class Scanner {
 	//界符：种别码45开始
 	public static char boundary[] = { '=', ',', ';', '[', ']', '(', ')', '{', '}'};
 	public static String boundarytoken[] = { "=", ",", ";", "[", "]", "(", ")", "{", "}"};
-	//读文件
-	public static ArrayList<String> readfile(File file){
-		ArrayList<String> strings=new ArrayList<String>();
-	       try{
-	           BufferedReader br = new BufferedReader(new FileReader(file));//构造一个BufferedReader类来读取文件
-	           String s = null;
-	            while((s = br.readLine())!=null){//使用readLine方法，一次读一行
-	               strings.add(s);
-	            }
-	            br.close();    
-	        }catch(Exception e){
-	            e.printStackTrace();
-	        }
-	       return strings;
-	   }
-		
 	//判断字母及下划线
 	public static Boolean isAlpha(char ch)
 	{
@@ -128,48 +112,86 @@ public class Scanner {
 				nextstate=4;
 			else if(ch == '.')
 				nextstate=2;
+			break;
 		case 2:
 			if(isDigit(ch))
 				nextstate =3;
+			break;
 		case 3:
 			if(isDigit(ch))
 				nextstate =3;
 			else if(ch == 'e')
 				nextstate=4;
+			break;
 		case 4:
 			if(ch == '-' || ch == '+' || isDigit(ch))
 				nextstate=5;
+			break;
 		case 5:
 			if(isDigit(ch))
 				nextstate =6;
+			break;
 		case 6:
 			if(isDigit(ch))
-				nextstate =6;			
+				nextstate =6;		
+			break;
 		}
 		return nextstate;
 	}
-		
+	//注释的DFA获得下一个状态
+	public static int noteGetNextStrustate(int startstate,char ch) {
+		int nextstate=-1;
+		switch (startstate) {
+		case 1:
+			if(ch=='*')
+				nextstate=2;
+			else 
+				nextstate=1;
+			break;
+		case 2:
+			if(ch=='/')
+				nextstate=3;
+			else if(ch=='*')
+				nextstate=2;
+			else 
+				nextstate=1;
+			break;
+		}
+		return nextstate;
+	}
+	//读文件
+		public static ArrayList<String> readfile(File file){
+			ArrayList<String> strings=new ArrayList<String>();
+		       try{
+		           BufferedReader br = new BufferedReader(new FileReader(file));//构造一个BufferedReader类来读取文件
+		           String s = null;
+		            while((s = br.readLine())!=null){//使用readLine方法，一次读一行
+		               strings.add(s);
+		            }
+		            br.close();    
+		        }catch(Exception e){
+		            e.printStackTrace();
+		        }
+		       return strings;
+		   }
 	public static void main(String[] args) {
-		String filepath="input.txt";
+		String filepath="src/lexicalAnalysis/input.txt";
 		File file=new File(filepath);
 		symbol.clear();
-		//symbol_pos = 0;
 		ArrayList<String> texts=new ArrayList<String>();
+		int stack1=0;//用于判断'('是否封闭
+		int stack2=0;//用于判断'['是否封闭
+		int stack3=0;//用于判断'{'是否封闭
 		texts=readfile(file);
 		try {
-			BufferedWriter out = new BufferedWriter(new FileWriter("token.txt"));
-			BufferedWriter out1 = new BufferedWriter(new FileWriter("symbol.txt"));
-			BufferedWriter out2 = new BufferedWriter(new FileWriter("error.txt"));
+			BufferedWriter out = new BufferedWriter(new FileWriter("src/lexicalAnalysis/token.txt"));
+			BufferedWriter out1 = new BufferedWriter(new FileWriter("src/lexicalAnalysis/symbol.txt"));
+			BufferedWriter out2 = new BufferedWriter(new FileWriter("src/lexicalAnalysis/error.txt"));
             //symbol.txt是符号表
-//			for(int j = 0; j < texts.size(); j++) {
 			String str = "";
 			for(int j = 0; j < texts.size(); j++) {
-				str=texts.get(j);
+				str=str+texts.get(j);
 			}
-//				if(str.equals(""))
-//					continue;//若有一行为空则直接跳过
-//				else {
-					//将字符串转化为字符串数组
 					char[] strline = str.toCharArray();
 					for(int i= 0; i < strline.length; i++) {
 						//遍历strline中的每个字符
@@ -216,14 +238,17 @@ public class Scanner {
 						else if(isDigit(ch)) {
 							//初始化进入1状态
 							int state = 1;
-							//声明计数变量
-							int k;
 							Boolean isfloat = false;
-							while ( (ch != '\0') && (isDigit(ch) || ch == '.' || ch == 'e' || ch == '-' || ch=='+')) {
+							token += ch; 
+							i++;
+							if(i>=strline.length) break;
+							ch = strline[i];//  
+							while ((ch != '\0') &&(isDigit(ch) || ch == '.' || ch == 'e' || ch == '-' || ch=='+')) {
 								if(ch == '.' || ch == 'e') {
 									 isfloat = true;
 								}
 								state=digitGetNextStrustate(state,ch);
+								System.out.println(state);
 								if (state > 6) break;
 								else
 									token += ch; 
@@ -240,7 +265,7 @@ public class Scanner {
 							//错误处理
 							if (haveMistake) {
 								//一直到“可分割”的字符结束  
-	                        	while (ch != '\0' && ch != ',' && ch != ';' && ch != ' ')
+	                        	while (ch != '\0' && !isBound(ch) && ch != ' ')
 	                            {  
 	                                token += ch;  
 	                                i++;
@@ -286,7 +311,7 @@ public class Scanner {
 							}
 						   //界符，赋值语句里的等于
 						   if(token.equals("=")) {
-							   int pos=isMatchOP(token)+45;
+							   int pos=isMatchbound(token)+45;
 							  out.write(token+"\t<"+pos+", "+" _ >\n");
 							  System.out.println(token+"\t<"+pos+", "+token+" >");
 						   }
@@ -301,7 +326,34 @@ public class Scanner {
 						//识别界符
 						else if(isBound(ch)) {
 							token +=ch;
-							int pos=isMatchOP(token)+45;
+							if(stack1<0) {
+								stack1=0;
+								out2.write(token + "\t没有与之匹配的左括号\n");
+                                System.out.println(token + "\t没有与之匹配的左括号");
+							}
+							if(stack2<0) {
+								stack2=0;
+								out2.write(token + "\t没有与之匹配的左括号\n");
+                                System.out.println(token + "\t没有与之匹配的左括号");
+							}
+							if(stack3<0) {
+								stack3=0;
+								out2.write(token + "\t没有与之匹配的左括号\n");
+                                System.out.println(token + "\t没有与之匹配的左括号");
+							}
+							if(ch=='(')
+								stack1++;
+							else if(ch==')')
+								stack1--;
+							if(ch=='[')
+								stack2++;
+							else if(ch==']')
+								stack2--;
+							if(ch=='{')
+								stack3++;
+							else if(ch=='}')
+								stack3--;
+							int pos=isMatchbound(token)+45;
 							  out.write(token+"\t<"+pos+", _ >\n");
 							  System.out.println(token+"\t<"+pos+", "+token+" >");
 							  token="";
@@ -321,20 +373,63 @@ public class Scanner {
 		                         {  
 									 --i; // / 列计数减1
 		                         }
-								 int pos=isMatchOP(token)+20;
+								 int pos=isMatchbound(token)+20;
 								  out.write(token+"\t<"+pos+", "+" _ >\n");
 								  System.out.println(token+"\t<"+pos+", "+token+" >");
 							 }
 							 //否则识别到/*
 							 else {
 								 Boolean haveMistake = false;
-								 
+								//初始化进入1状态
+								int state = 1;
+								i++;
+								if(i>=strline.length) break;
+								ch = strline[i];
+								token="/*";
+								while(true) {
+									state=noteGetNextStrustate(state, ch);
+									if(state==3) {
+										token+=ch;
+										break;
+									}										
+									else {
+										i++;
+									}
+									token+=ch;
+									if(i>=strline.length) break;
+									ch = strline[i];
+								}
+								//如果结束的时候注释的自动机处于1或2状态，则有错，说明没有检测到*/
+								if(state==1 || state==2 ) {
+									haveMistake=true;
+								}
+								if(haveMistake) {
+									out2.write(token + "\t注释/*不封闭\n");
+	                                System.out.println(token + "\t注释/*不封闭");
+								}
+								else {
+									out.write(token+"\t<"+55+", "+" _ >\n");//注释的种别码记为55
+								  System.out.println(token+"\t<"+55+", "+token+" >");
+								}
 							 }
 							 
 						}
+					}
+					if(stack1!=0) {
+						out2.write("(\t(不封闭\n");
+                    System.out.println("(\t(不封闭\n");
+					}
+					if(stack2!=0) {
+						out2.write("[\t[不封闭\n");
+                    System.out.println("[\t[不封闭\n");
+					}
+					if(stack3!=0) {
+						out2.write("[\t{不封闭\n");
+                    System.out.println("[\t{不封闭\n");
 					}					
-		//		}
-		//	}
+				out.close();
+				out1.close();
+				out2.close();
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

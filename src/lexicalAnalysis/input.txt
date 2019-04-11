@@ -1,0 +1,4 @@
+while(num!=12e-4)
+{num++;
+/*hhhh
+hhhh
