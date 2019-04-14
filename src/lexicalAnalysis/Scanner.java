@@ -15,13 +15,13 @@ public class Scanner {
 	public static Map<String, Integer> symbol = new HashMap<String, Integer>();
 	//关键字：种别码从6开始
 	public static String keywords[] = {"int","float","double", "if","else", "do", "while", 
-			"continue","break","typedef","struct","const","char","static"};
+			"continue","break","typedef","struct","const","char","static","return","String"};
 //	public static String keywordstoken[] = { "INT","FLOAT", "DOUBLE", "IF","ELSE","DO","WHILE",
 //			"CONTINUE","BREAK","TYPEDEF","STRUCT","CONST","CHAR","STATIC"};
 	//运算符
 	public static char operator[] = { '+', '-', '*', '=', '<', '>', '&', '|', '~',  
 	         '^', '!', '%'};
-	//种别码：20开始
+	//种别码：22开始
 	public static String operatortoken[] = {"+","-","*","/","<",">","&","|","~","^","!",
 			"%","++","--",">>","<<","&&","||","!=",">=","<=","+=","-=","*=","/="};
 	//运算符后可加等于
@@ -35,7 +35,7 @@ public class Scanner {
 	public static Boolean isPlusSame(char ch) {
 		 return ch == '+' || ch == '-' || ch == '&' || ch == '|' || ch == '<' || ch == '>';  
 	}
-	//界符：种别码45开始
+	//界符：种别码47开始
 	public static char boundary[] = { '=', ',', ';', '[', ']', '(', ')', '{', '}'};
 	public static String boundarytoken[] = { "=", ",", ";", "[", "]", "(", ")", "{", "}"};
 	//判断字母及下划线
@@ -67,7 +67,7 @@ public class Scanner {
 		 }      
 		        return false;  
 	}
-	//判断关键字,返回该关键字在关键字数组中的位置
+	//判断关键字,返回该关键字的种别码
 	public static int isMatchKeyword(String str) {  
       //  Boolean flag = false;  
 		int n=-1;
@@ -77,9 +77,9 @@ public class Scanner {
                 break;  
             }  
         }  
-        return n;  
+        return n+6;  
     }
-	//判断运算符字在运算符数组中的位置
+	//判断运算字符的种别码
 	public static int isMatchOP(String str) {   
 			int n=-1;
 	        for (int i = 0; i < operatortoken.length; i++) {  
@@ -88,9 +88,9 @@ public class Scanner {
 	                break;  
 	            }  
 	        }  
-	        return n;  
+	        return n+22;  
 	    }
-	//判断运算符字在运算符数组中的位置
+	//判断界符的种别码
 	public static int isMatchbound(String str) { 
 					int n=-1;
 			        for (int i = 0; i < boundarytoken.length; i++) {  
@@ -99,7 +99,7 @@ public class Scanner {
 			                break;  
 			            }  
 			        }  
-			        return n;  
+			        return n+47;  
 			    }
 	//数字常量DFA获得下一个状态
 	public static int digitGetNextStrustate(int startstate,char ch) {
@@ -159,6 +159,19 @@ public class Scanner {
 		}
 		return nextstate;
 	}
+	//字符串常量DFA获得下一个状态
+	public static int StringGetNextStrustate(int startstate,char ch) {
+		int nextstate=-1;
+		switch (startstate) {
+		case 1:
+			if(ch=='"')
+				nextstate=2;
+			else 
+				nextstate=1;
+			break;
+		}
+		return nextstate;
+	}
 	//读文件
 		public static ArrayList<String> readfile(File file){
 			ArrayList<String> strings=new ArrayList<String>();
@@ -179,19 +192,21 @@ public class Scanner {
 		File file=new File(filepath);
 		symbol.clear();
 		ArrayList<String> texts=new ArrayList<String>();
-		int stack1=0;//用于判断'('是否封闭
-		int stack2=0;//用于判断'['是否封闭
-		int stack3=0;//用于判断'{'是否封闭
+//		int stack1=0;//用于判断'('是否封闭
+//		int stack2=0;//用于判断'['是否封闭
+//		int stack3=0;//用于判断'{'是否封闭
 		texts=readfile(file);
 		try {
 			BufferedWriter out = new BufferedWriter(new FileWriter("src/lexicalAnalysis/token.txt"));
 			BufferedWriter out1 = new BufferedWriter(new FileWriter("src/lexicalAnalysis/symbol.txt"));
 			BufferedWriter out2 = new BufferedWriter(new FileWriter("src/lexicalAnalysis/error.txt"));
             //symbol.txt是符号表
-			String str = "";
+//			String str = "";
+//			for(int j = 0; j < texts.size(); j++) {
+//				str=str+texts.get(j);
+//			}
 			for(int j = 0; j < texts.size(); j++) {
-				str=str+texts.get(j);
-			}
+				String str=texts.get(j);			
 					char[] strline = str.toCharArray();
 					for(int i= 0; i < strline.length; i++) {
 						//遍历strline中的每个字符
@@ -209,16 +224,16 @@ public class Scanner {
 							--i;//指针回退，列计数减1
 							//是关键字
 							int pos=isMatchKeyword(token.toString());
-							if(pos!=-1) {
-								//如果符号表为空或符号表中不包含当前token，则加入
-								if (symbol.isEmpty() || (!symbol.isEmpty() && !symbol.containsKey(token))) 
-	                        	{  
-	                                symbol.put(token, symbol_pos);  
-	                                out1.write(token+"\t"+symbol_pos+"\n");
-	                                symbol_pos++;
-	                            }
-								out.write(token+"\t<"+(pos+6)+", _ >\n");
-								System.out.println(token+"\t<"+(pos+6)+", _ >");
+							if(pos!=5) {
+//								//如果符号表为空或符号表中不包含当前token，则加入
+//								if (symbol.isEmpty() || (!symbol.isEmpty() && !symbol.containsKey(token))) 
+//	                        	{  
+//	                                symbol.put(token, symbol_pos);  
+//	                                out1.write(token+"\t"+symbol_pos+"\n");
+//	                                symbol_pos++;
+//	                            }
+								out.write(token+"\t<"+(pos)+", _ >\n");
+								System.out.println(token+"\t<"+(pos)+", _ >");
 							}
 							//是标识符,标识符的种别码为1
 							else {
@@ -229,8 +244,8 @@ public class Scanner {
 	                                out1.write(token+"\t"+symbol_pos+"\n");
 	                                symbol_pos++;
 	                            }
-								out.write(token+"\t<1 , "+token+" >\n");
-								System.out.println(token+"\t<1 , "+token+" >");
+								out.write(token+"\t<"+1+" , "+symbol.get(token)+" >\n");
+								System.out.println(token+"\t<"+1+" , "+symbol.get(token)+" >");
 							}
 							token="";
 						}
@@ -248,7 +263,7 @@ public class Scanner {
 									 isfloat = true;
 								}
 								state=digitGetNextStrustate(state,ch);
-								System.out.println(state);
+							//	System.out.println(state);
 								if (state > 6) break;
 								else
 									token += ch; 
@@ -272,8 +287,8 @@ public class Scanner {
 	                                if(i >= strline.length) break;  
 	                                ch = strline[i];  
 	                            }  
-	                        	out2.write(token + "\t请确认无符号常数输入正确\n");
-                                System.out.println(token + "\t请确认无符号常数输入正确");
+	                        	out2.write("第"+(j+1)+"行\t"+token + "\t请确认无符号常数输入正确\n");
+                                System.out.println("第"+(j+1)+"行\t"+token + "\t请确认无符号常数输入正确");
 							}else 
 	                        {  
 	                            if (isfloat) 
@@ -311,13 +326,13 @@ public class Scanner {
 							}
 						   //界符，赋值语句里的等于
 						   if(token.equals("=")) {
-							   int pos=isMatchbound(token)+45;
+							   int pos=isMatchbound(token);
 							  out.write(token+"\t<"+pos+", "+" _ >\n");
 							  System.out.println(token+"\t<"+pos+", "+token+" >");
 						   }
 						   //运算符
 						   else{
-							  int pos=isMatchOP(token)+20;
+							  int pos=isMatchOP(token);
 							  out.write(token+"\t<"+pos+", "+" _ >\n");
 							  System.out.println(token+"\t<"+pos+", "+token+" >");
 						    }
@@ -326,34 +341,34 @@ public class Scanner {
 						//识别界符
 						else if(isBound(ch)) {
 							token +=ch;
-							if(stack1<0) {
-								stack1=0;
-								out2.write(token + "\t没有与之匹配的左括号\n");
-                                System.out.println(token + "\t没有与之匹配的左括号");
-							}
-							if(stack2<0) {
-								stack2=0;
-								out2.write(token + "\t没有与之匹配的左括号\n");
-                                System.out.println(token + "\t没有与之匹配的左括号");
-							}
-							if(stack3<0) {
-								stack3=0;
-								out2.write(token + "\t没有与之匹配的左括号\n");
-                                System.out.println(token + "\t没有与之匹配的左括号");
-							}
-							if(ch=='(')
-								stack1++;
-							else if(ch==')')
-								stack1--;
-							if(ch=='[')
-								stack2++;
-							else if(ch==']')
-								stack2--;
-							if(ch=='{')
-								stack3++;
-							else if(ch=='}')
-								stack3--;
-							int pos=isMatchbound(token)+45;
+//							if(stack1<0) {
+//								stack1=0;
+//								out2.write(token + "\t没有与之匹配的左括号\n");
+//                                System.out.println(token + "\t没有与之匹配的左括号");
+//							}
+//							if(stack2<0) {
+//								stack2=0;
+//								out2.write(token + "\t没有与之匹配的左括号\n");
+//                                System.out.println(token + "\t没有与之匹配的左括号");
+//							}
+//							if(stack3<0) {
+//								stack3=0;
+//								out2.write(token + "\t没有与之匹配的左括号\n");
+//                                System.out.println(token + "\t没有与之匹配的左括号");
+//							}
+//							if(ch=='(')
+//								stack1++;
+//							else if(ch==')')
+//								stack1--;
+//							if(ch=='[')
+//								stack2++;
+//							else if(ch==']')
+//								stack2--;
+//							if(ch=='{')
+//								stack3++;
+//							else if(ch=='}')
+//								stack3--;
+							int pos=isMatchbound(token);
 							  out.write(token+"\t<"+pos+", _ >\n");
 							  System.out.println(token+"\t<"+pos+", "+token+" >");
 							  token="";
@@ -373,7 +388,7 @@ public class Scanner {
 		                         {  
 									 --i; // / 列计数减1
 		                         }
-								 int pos=isMatchbound(token)+20;
+								 int pos=isMatchbound(token);
 								  out.write(token+"\t<"+pos+", "+" _ >\n");
 								  System.out.println(token+"\t<"+pos+", "+token+" >");
 							 }
@@ -396,45 +411,98 @@ public class Scanner {
 										i++;
 									}
 									token+=ch;
-									if(i>=strline.length) break;
+									if(i>=strline.length && j<texts.size()-1) {
+										j++;
+										str=texts.get(j);			
+										strline = str.toCharArray();
+										i=0;
+										ch = strline[i];
+									}
+									else if(i<strline.length && j<texts.size())
 									ch = strline[i];
+									else {
+										break;
+									}
 								}
 								//如果结束的时候注释的自动机处于1或2状态，则有错，说明没有检测到*/
 								if(state==1 || state==2 ) {
 									haveMistake=true;
 								}
 								if(haveMistake) {
-									out2.write(token + "\t注释/*不封闭\n");
-	                                System.out.println(token + "\t注释/*不封闭");
+									out2.write("第"+(j+1)+"行\t"+token + "\t注释/*不封闭\n");
+	                                System.out.println("第"+(j+1)+"行\t"+token + "\t注释/*不封闭");
 								}
 								else {
-									out.write(token+"\t<"+55+", "+" _ >\n");//注释的种别码记为55
-								  System.out.println(token+"\t<"+55+", "+token+" >");
+									//out.write(token+"\t<"+55+", "+" _ >\n");//注释的种别码记为55
+								  System.out.println("注释： "+token);
 								}
 							 }
-							 
+							 token="";
 						}
+						//判断是否是字符串类型
+						else if (ch == '"') {
+							Boolean haveMistake = false;
+							token += ch;
+							int state=1;
+							i++;
+							if(i>=strline.length) break;
+							ch = strline[i];//  
+							token="\"";
+							while(true) {
+								state=StringGetNextStrustate(state, ch);
+								if(state==2) {
+									token+=ch;
+									break;
+								}										
+								else {
+									i++;
+								}
+								token+=ch;
+								if(i>=strline.length)
+									break;
+								ch = strline[i];
+							}
+							if(state==1) {
+								haveMistake=true;
+							}
+							if(haveMistake) {
+								out2.write("第"+(j+1)+"行\t"+token + "\t字符串\"不封闭\n");
+                                System.out.println("第"+(j+1)+"行\t"+token + "\t字符串\"不封闭");
+							}else {
+								out.write(token+"\t<"+5+", "+" _ >\n");
+								System.out.println(token+"\t<"+5+", "+" _ >");
+							}
+							token="";
+						}
+						//不合法字符
+						else
+	                    {  
+	                        if(ch != ' ' && ch != '\t' && ch != '\0' && ch != '\n' && ch != '\r')  
+	                        {  
+	                        	out2.write("第"+(j+1)+"行\t"+ch + "\t存在不合法字符\n");
+                                System.out.println("第"+(j+1)+"行\t"+token + "\t存在不合法字符");
+	                        }  
+	                    }
 					}
-					if(stack1!=0) {
-						out2.write("(\t(不封闭\n");
-                    System.out.println("(\t(不封闭\n");
-					}
-					if(stack2!=0) {
-						out2.write("[\t[不封闭\n");
-                    System.out.println("[\t[不封闭\n");
-					}
-					if(stack3!=0) {
-						out2.write("[\t{不封闭\n");
-                    System.out.println("[\t{不封闭\n");
-					}					
+			}
+//					if(stack1!=0) {
+//						out2.write("(\t(不封闭\n");
+//                    System.out.println("(\t(不封闭\n");
+//					}
+//					if(stack2!=0) {
+//						out2.write("[\t[不封闭\n");
+//                    System.out.println("[\t[不封闭\n");
+//					}
+//					if(stack3!=0) {
+//						out2.write("[\t{不封闭\n");
+//                    System.out.println("[\t{不封闭\n");
+//					}	
 				out.close();
 				out1.close();
 				out2.close();
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-		}
-       
-		
+		}	
 	}
 }

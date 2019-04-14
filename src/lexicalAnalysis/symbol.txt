@@ -1,2 +1,14 @@
-while	0
-num	1
+num1	0
+s2	1
+count	2
+num	3
+i	4
+j	5
+m	6
+string	7
+string2	8
+k	9
+for	10
+addnum	11
+a	12
+b	13

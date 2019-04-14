@@ -1,4 +1,28 @@
-while(num!=12e-4)
-{num++;
+typedef struct{
+int num1=10;
+String s2="";
+}count;
+int num=10;
+int i=12e-4;
+int j=10e+3;
+int m=1.1.1;
+String string="abc";
+String string2="aaa;
+while(num!=100)
+{num++};
+do{
+k=j+1
+num++;
+}while(num>=300)
+i--;
+/*alalalal*/
+for(int k=0;k<300;k++){
+
+}
+float addnum(float a,float b){
+float a=a+b;
+return a;
+}
+жа
 /*hhhh
 hhhh
